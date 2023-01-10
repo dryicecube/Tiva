@@ -1,0 +1,6 @@
+"./startup_ccs.obj"
+"./tdc_v1.obj"
+"./utils/uartstdio.obj"
+"../hello_ccs.cmd"
+-llibc.a
+-l"/home/qkd1/ti/tivaware_c_series_2_1_4_178/driverlib/ccs/Debug/driverlib.lib"
