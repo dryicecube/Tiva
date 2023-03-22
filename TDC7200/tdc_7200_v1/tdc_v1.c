@@ -90,6 +90,8 @@ uint32_t spiReadReg8(const uint8_t addr);               // SPI read 8
 void spiWriteReg8(const uint8_t addr, const uint8_t val); //SPI write 8
 uint32_t spiReadReg24(const uint8_t addr);              // SPI read 24
 
+static void ui64toa(uint64_t v, char * buf, uint8_t base);
+
 //*****************************************************************************
 // Main
 //*****************************************************************************
@@ -339,7 +341,7 @@ void TDC7200_INT ()
     int64_t normLSB = 0ull;
     uint64_t tof = 0ull;
     GPIOIntClear(GPIO_PORTA_BASE,GPIO_INT_PIN_4);
-    UARTprintf("Hey, saw an interrupt pin\n Will try measuring Calib1 \n");
+    //UARTprintf("Hey, saw an interrupt pin\n Will try measuring Calib1 \n");
 
 
     const uint32_t calibration1 = spiReadReg24(TDC7200_REG_ADR_CALIBRATION1);               // Retrieveing the CALIB1 value
@@ -366,12 +368,23 @@ void TDC7200_INT ()
     tof = (((int64_t)(time1)-(int64_t)(time2))*normLSB)>>shift;   //reg values
     tof+= ((uint64_t)clock_count1)*(uint64_t)((PS_PER_SEC)/(TDC7200_CLOCK_FREQ));
 
-    UARTprintf("tof'%x'\n",tof);
+    if (tof == 0ull)
+        {
+        UARTprintf("0\n");
+        SysCtlDelay(SysCtlClockGet() / (10 * 3));
+        }
 
+    else {
+    char buff[40];
+    ui64toa(tof, buff,10);
+
+    //UARTprintf("tof'%i'\n",tof);
+    UARTprintf("%s\n",buff);
+    }
 
 
     //spiWriteReg8(TDC7200_REG_ADR_CONFIG1,TDC7200_REG_SHIFT_INT_MASK_NEW_MEAS_MASK);  //Start the measurement
-    UARTprintf("Measurement Restarted \n");
+    //UARTprintf("\nMeasurement Restarted \n");
     spiWriteReg8(TDC7200_REG_ADR_CONFIG1,TDC7200_REG_SHIFT_INT_MASK_NEW_MEAS_MASK);  //Start the measurement
 }
 
@@ -414,4 +427,25 @@ uint32_t spiReadReg24(const uint8_t addr)
     return val;
 
 }
+static void ui64toa(uint64_t v, char * buf, uint8_t base)
+{
+  int idx = 0;
+  int i,j;
+  uint64_t w = 0;
+  while (v > 0)
+  {
+    w = v / base;
+    buf[idx++] = (v - w * base) + '0';
+    v = w;
+  }
+  buf[idx] = 0;
+  // reverse char array
+  for (i = 0, j = idx - 1; i < idx / 2; i++, j--)
+  {
+    char c = buf[i];
+    buf[i] = buf[j];
+    buf[j] = c;
+  }
+}
+
 
