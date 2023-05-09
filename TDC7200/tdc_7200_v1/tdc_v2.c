@@ -7,7 +7,7 @@
 //******************************************************************************
 // In this version, the baud rate is changed to the maximum possible value.
 // Changed clock source to system clock instead of PIOSC (16MHz)
-// Set baudrate to 1000000
+//
 //      UARTClockSourceSet(UART0_BASE, SysCtlClockGet());
 //      UARTStdioConfig(0, 1000000 , SysCtlClockGet());
 //
@@ -262,20 +262,16 @@ void SPIenable(void)
 uint32_t spiReadReg8(const uint8_t addr)
 {
     uint32_t val;
-    //GPIOPinWrite(GPIO_PORTA_BASE, GPIO_PIN_3,0);   //CS low
     GPIOPinWrite(GPIO_PORTE_BASE, GPIO_PIN_0, 0);// Enabled SSI
     SSIDataPut(SSI2_BASE, ((addr & TDC7200_SPI_REG_ADDR_MASK)|TDC7200_SPI_REG_READ));
     SSIDataGet(SSI2_BASE, &junk);
     junk&= 0x00FF;
-    //UARTprintf("junk output is:");
-   // UARTprintf("'%x' ", junk);
+
     SSIDataPut(SSI2_BASE,0u);
 
     SSIDataGet(SSI2_BASE, &val);
     val&= 0x000000FF;
-    //UARTprintf("Returned output is:");
-    //UARTprintf("'%x' \n", val);
-    //GPIOPinWrite(GPIO_PORTA_BASE, GPIO_PIN_3,GPIO_PIN_3);   //CS high
+
     GPIOPinWrite(GPIO_PORTE_BASE, GPIO_PIN_0, GPIO_PIN_0);// Enabled SSI
 
     return val;
@@ -294,18 +290,14 @@ void spiWriteReg8(const uint8_t addr, const uint8_t val)
 
 void startMeasurement(void)
 {
-//    uint32_t before = spiReadReg8(0x02u);
-//    UARTprintf("Before:");
-//    UARTprintf("'%x' ",before);
+
     // Clear interrupt status
     spiWriteReg8(TDC7200_REG_ADR_INT_STATUS,TDC7200_REG_SHIFT_INT_STATUS_MEAS_COMPLETE_FLAG|
                  TDC7200_REG_SHIFT_INT_STATUS_MEAS_STARTED_FLAG
                  | TDC7200_REG_SHIFT_INT_STATUS_CLOCK_CNTR_OVF_INT
                  | TDC7200_REG_SHIFT_INT_STATUS_COARSE_CNTR_OVF_INT
                  | TDC7200_REG_SHIFT_INT_STATUS_NEW_MEAS_INT);
-//    before = spiReadReg8(0x02u);
-//    UARTprintf("After:");
-//    UARTprintf("'%x' ",before);
+
     // Select Mode 2 for operation for operations more than 500 ns
     spiWriteReg8(TDC7200_REG_ADR_CONFIG1,TDC7200_REG_SHIFT_CONFIG1_MEAS_MODE_2
                  |TDC7200_REG_SHIFT_FORCE_CAL);
@@ -314,35 +306,6 @@ void startMeasurement(void)
 
 
 
-//void
-//UARTIntHandler(void)
-//{
-//    uint32_t ui32Status;
-//        ui32Status = UARTIntStatus(UART0_BASE, true);// Get the interrupt status.
-//        UARTIntClear(UART0_BASE, ui32Status);    // Clear the asserted interrupts.
-//        while(UARTCharsAvail(UART0_BASE))
-//            {
-//
-//                UARTCharPutNonBlocking(UART0_BASE,UARTCharGetNonBlocking(UART0_BASE)); // Read the next character from the UART and write it back to the UART.
-//                //UARTCharPutNonBlocking(UART0_BASE,c);
-//                //
-//                // Blink the LED to show a character transfer is occuring.
-//                //
-//                GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_2, GPIO_PIN_2);
-//
-//                //
-//                // Delay for 1 millisecond.  Each SysCtlDelay is about 3 clocks.
-//                //
-//                SysCtlDelay(SysCtlClockGet() / (1000 * 3));
-//
-//                //
-//                // Turn off the LED
-//                //
-//                GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_2, 0);
-//                //UARTprintf("Hello, world!\n");
-//
-//            }
-//}
 void GPIOINT()
 {
     SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOA);
@@ -401,9 +364,6 @@ void TDC7200_INT ()
     UARTprintf("%s\n",buff);
     }
 
-
-    //spiWriteReg8(TDC7200_REG_ADR_CONFIG1,TDC7200_REG_SHIFT_INT_MASK_NEW_MEAS_MASK);  //Start the measurement
-    //UARTprintf("\nMeasurement Restarted \n");
     spiWriteReg8(TDC7200_REG_ADR_CONFIG1,TDC7200_REG_SHIFT_INT_MASK_NEW_MEAS_MASK);  //Start the measurement
 }
 
@@ -440,7 +400,6 @@ uint32_t spiReadReg24(const uint8_t addr)
     val|=temp;
     //UARTprintf("Returned output is:");
     //UARTprintf("'%08x' \n", val);
-    //GPIOPinWrite(GPIO_PORTA_BASE, GPIO_PIN_3,GPIO_PIN_3);   //CS high
     GPIOPinWrite(GPIO_PORTE_BASE, GPIO_PIN_0, GPIO_PIN_0);// Enabled SSI
 
     return val;
