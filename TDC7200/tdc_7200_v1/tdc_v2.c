@@ -35,7 +35,7 @@
 
 //*****************************************************************************
 //! UART0, connected to the Virtual Serial Port and running at
-//! 115,200, 8-N-1, is used to display messages from this application.
+//! 1,000,000, 8-N-1, is used to display messages from this application.
 //*****************************************************************************
 
 //*****************************************************************************
@@ -133,13 +133,7 @@ int main(void)
 
 
     UARTprintf("Starting TDC7200!\n");
-
-//    while(1)
-//        {
-//        begin();
-//        //UARTprintf("Help!\n");
-//        }
-
+    
     while( !begin())
     {
         UARTprintf("Comms check failed\n");
@@ -154,11 +148,6 @@ int main(void)
 
     const uint8_t shift=20;
     UARTprintf("Measurement Started\n");
-//    double test=0ull;
-//    while (1){
-//    test = (0.05);
-//    UARTprintf("'%x'\n",test);
-//    }
     return 0;
 }
 
@@ -182,8 +171,6 @@ ConfigureUART(void)
     UARTStdioConfig(0, 1000000 , SysCtlClockGet());
     UARTFlowControlSet(UART0_BASE, UART_FLOWCONTROL_NONE) ; // Set UART flow control - NONE
     UARTFIFOEnable(UART0_BASE) ; // UART FIFO enable
-    //IntEnable(INT_UART0); // Interrupt Enable
-    //UARTIntEnable(UART0_BASE, UART_INT_RX | UART_INT_RT); //pin interrupt enabled
 }
 
 
