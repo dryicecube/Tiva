@@ -35,7 +35,7 @@
 
 //*****************************************************************************
 //! UART0, connected to the Virtual Serial Port and running at
-//! 1,000,000, 8-N-1, is used to display messages from this application.
+//! 115,200, 8-N-1, is used to display messages from this application.
 //*****************************************************************************
 
 //*****************************************************************************
@@ -133,7 +133,12 @@ int main(void)
 
 
     UARTprintf("Starting TDC7200!\n");
-    
+//    while(1)
+//        {
+//        begin();
+//        //UARTprintf("Help!\n");
+//        }
+
     while( !begin())
     {
         UARTprintf("Comms check failed\n");
@@ -148,6 +153,11 @@ int main(void)
 
     const uint8_t shift=20;
     UARTprintf("Measurement Started\n");
+//    double test=0ull;
+//    while (1){
+//    test = (0.05);
+//    UARTprintf("'%x'\n",test);
+//    }
     return 0;
 }
 
@@ -171,6 +181,8 @@ ConfigureUART(void)
     UARTStdioConfig(0, 1000000 , SysCtlClockGet());
     UARTFlowControlSet(UART0_BASE, UART_FLOWCONTROL_NONE) ; // Set UART flow control - NONE
     UARTFIFOEnable(UART0_BASE) ; // UART FIFO enable
+    //IntEnable(INT_UART0); // Interrupt Enable
+    //UARTIntEnable(UART0_BASE, UART_INT_RX | UART_INT_RT); //pin interrupt enabled
 }
 
 
@@ -234,8 +246,8 @@ void SPIenable(void)
     GPIOPinConfigure(GPIO_PB7_SSI2TX);
     GPIOPinTypeSSI(GPIO_PORTB_BASE, GPIO_PIN_7 | GPIO_PIN_6 | // SSI pin enabled
                    GPIO_PIN_4);
-    SSIConfigSetExpClk(SSI2_BASE, 20000000, SSI_FRF_MOTO_MODE_0,         // SSI mode selected
-                       SSI_MODE_MASTER, 1000000, 8);
+    SSIConfigSetExpClk(SSI2_BASE, 20000000, SSI_FRF_MOTO_MODE_0,         // SSI mode selected (20 MHz SCLK)
+                       SSI_MODE_MASTER, 5000000, 8);
 //    SSIConfigSetExpClk(SSI0_BASE, 20000000, SSI_FRF_TI,         // SSI mode selected
 //                        SSI_MODE_MASTER, 1000000, 8);
     //SSIAdvModeSet(SSI0_BASE,)
@@ -310,32 +322,20 @@ void TDC7200_INT ()
     int64_t normLSB = 0ull;
     uint64_t tof = 0ull;
     GPIOIntClear(GPIO_PORTA_BASE,GPIO_INT_PIN_4);
-    //UARTprintf("Hey, saw an interrupt pin\n Will try measuring Calib1 \n");
+
 
 
     const uint32_t calibration1 = spiReadReg24(TDC7200_REG_ADR_CALIBRATION1);               // Retrieveing the CALIB1 value
-    //UARTprintf("Calib 1: '%x' \t",calibration1);
-
     const uint32_t calibration2 = spiReadReg24(TDC7200_REG_ADR_CALIBRATION2);               // // Retrieveing the CALIB2 value
-    //UARTprintf("Calib 2: '%x' \t",calibration2);
-
     const uint32_t time1= spiReadReg24(TDC7200_REG_ADR_TIME1);
-    //UARTprintf("Time1: '%x' \t",time1);
-
     const uint32_t time2= spiReadReg24(TDC7200_REG_ADR_TIME2);
-    //UARTprintf("Time2: '%x' \t",time2);
-
     const uint32_t clock_count1= spiReadReg24(TDC7200_REG_ADR_CLOCK_COUNT1);
-    //UARTprintf("Clock_Count1: '%x' \t",clock_count1);
-
     calCount= (((int64_t)(calibration2-calibration1)<<(shift))/(TDC7200_cal2_Period-1));          // Define calCount
-    //UARTprintf("calCount'%x'\t",calCount);
-
     normLSB =((int64_t)(((PS_PER_SEC)/(TDC7200_CLOCK_FREQ)))<<(2*shift))/calCount;
-    //UARTprintf("normLSB'%x'\t",normLSB);
-
     tof = (((int64_t)(time1)-(int64_t)(time2))*normLSB)>>shift;   //reg values
     tof+= ((uint64_t)clock_count1)*(uint64_t)((PS_PER_SEC)/(TDC7200_CLOCK_FREQ));
+
+    spiWriteReg8(TDC7200_REG_ADR_CONFIG1,TDC7200_REG_SHIFT_INT_MASK_NEW_MEAS_MASK);  //Start the measurement
 
     if (tof == 0ull)
         {
@@ -346,12 +346,10 @@ void TDC7200_INT ()
     else {
     char buff[40];
     ui64toa(tof, buff,10);
-
-    //UARTprintf("tof'%i'\n",tof);
     UARTprintf("%s\n",buff);
     }
 
-    spiWriteReg8(TDC7200_REG_ADR_CONFIG1,TDC7200_REG_SHIFT_INT_MASK_NEW_MEAS_MASK);  //Start the measurement
+
 }
 
 
@@ -359,34 +357,24 @@ uint32_t spiReadReg24(const uint8_t addr)
 {
     uint32_t val=0, temp=0;
 
-    //GPIOPinWrite(GPIO_PORTA_BASE, GPIO_PIN_3,0);   //CS low
-    GPIOPinWrite(GPIO_PORTE_BASE, GPIO_PIN_0, 0);// Enabled SSI
+        GPIOPinWrite(GPIO_PORTE_BASE, GPIO_PIN_0, 0);// Enabled SSI
     SSIDataPut(SSI2_BASE, ((addr & TDC7200_SPI_REG_ADDR_MASK)|TDC7200_SPI_REG_READ));
     SSIDataGet(SSI2_BASE, &junk);
     junk&= 0x00FF;
-    //UARTprintf("junk output is:");
-    //UARTprintf("'%x' \n", junk);
     SSIDataPut(SSI2_BASE,0u);
     SSIDataGet(SSI2_BASE, &temp);
     temp&= 0x000000FF;
-    //UARTprintf("1st 8 '%x' \n", temp);
     val=temp;
     val <<=8;
-    //UARTprintf("'%08x' \n", val);
     SSIDataPut(SSI2_BASE,0u);
     SSIDataGet(SSI2_BASE, &temp);
     temp&= 0x000000FF;
-    //UARTprintf("2nd 8'%x' \n", temp);
     val|=temp;
     val <<=8;
-    //UARTprintf("'%08x' \n", val);
     SSIDataPut(SSI2_BASE,0u);
     SSIDataGet(SSI2_BASE, &temp);
     temp&= 0x000000FF;
-    //UARTprintf(" third8'%x' \n", temp);
     val|=temp;
-    //UARTprintf("Returned output is:");
-    //UARTprintf("'%08x' \n", val);
     GPIOPinWrite(GPIO_PORTE_BASE, GPIO_PIN_0, GPIO_PIN_0);// Enabled SSI
 
     return val;
@@ -412,6 +400,5 @@ static void ui64toa(uint64_t v, char * buf, uint8_t base)
     buf[j] = c;
   }
 }
-
 
 
