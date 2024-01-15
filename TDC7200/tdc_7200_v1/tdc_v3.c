@@ -302,8 +302,7 @@ void startMeasurement(void)
 
     // Select Mode 2 for operation for operations more than 500 ns
     spiWriteReg8(TDC7200_REG_ADR_CONFIG1,TDC7200_REG_SHIFT_CONFIG1_MEAS_MODE_2
-                 |TDC7200_REG_SHIFT_FORCE_CAL);
-    spiWriteReg8(TDC7200_REG_ADR_CONFIG1,TDC7200_REG_SHIFT_INT_MASK_NEW_MEAS_MASK);  //Start the measurement
+                 |TDC7200_REG_SHIFT_FORCE_CAL|TDC7200_REG_SHIFT_INT_MASK_NEW_MEAS_MASK);  //Start the measurement
 }
 
 
@@ -348,7 +347,8 @@ void TDC7200_INT ()
 //    spiReadReg2x24(TDC7200_REG_ADR_TIME1,&t1,&t2);
 //    UARTprintf("t1 1 : '%x' \t",t1);
 //    UARTprintf("t2 2 : '%x' \t",t2);
-    spiWriteReg8(TDC7200_REG_ADR_CONFIG1,TDC7200_REG_SHIFT_INT_MASK_NEW_MEAS_MASK);  //Start the measurement
+    spiWriteReg8(TDC7200_REG_ADR_CONFIG1,TDC7200_REG_SHIFT_CONFIG1_MEAS_MODE_2
+                 |TDC7200_REG_SHIFT_FORCE_CAL|TDC7200_REG_SHIFT_INT_MASK_NEW_MEAS_MASK);  //Start the measurement
 
     calCount= (((int64_t)(calibration2-calibration1)<<(shift))/(TDC7200_cal2_Period-1));          // Define calCount
     normLSB =((int64_t)(((PS_PER_SEC)/(TDC7200_CLOCK_FREQ)))<<(2*shift))/calCount;
