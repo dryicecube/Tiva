@@ -299,8 +299,7 @@ void startMeasurement(void)
 
     // Select Mode 2 for operation for operations more than 500 ns
     spiWriteReg8(TDC7200_REG_ADR_CONFIG1,TDC7200_REG_SHIFT_CONFIG1_MEAS_MODE_2
-                 |TDC7200_REG_SHIFT_FORCE_CAL);
-    spiWriteReg8(TDC7200_REG_ADR_CONFIG1,TDC7200_REG_SHIFT_INT_MASK_NEW_MEAS_MASK);  //Start the measurement
+                 |TDC7200_REG_SHIFT_FORCE_CAL|TDC7200_REG_SHIFT_INT_MASK_NEW_MEAS_MASK);  //Start the measurement
 }
 
 
@@ -335,7 +334,8 @@ void TDC7200_INT ()
     tof = (((int64_t)(time1)-(int64_t)(time2))*normLSB)>>shift;   //reg values
     tof+= ((uint64_t)clock_count1)*(uint64_t)((PS_PER_SEC)/(TDC7200_CLOCK_FREQ));
 
-    spiWriteReg8(TDC7200_REG_ADR_CONFIG1,TDC7200_REG_SHIFT_INT_MASK_NEW_MEAS_MASK);  //Start the measurement
+    spiWriteReg8(TDC7200_REG_ADR_CONFIG1,TDC7200_REG_SHIFT_CONFIG1_MEAS_MODE_2
+                 |TDC7200_REG_SHIFT_FORCE_CAL|TDC7200_REG_SHIFT_INT_MASK_NEW_MEAS_MASK);  //Start the measurement
 
     if (tof == 0ull)
         {
