@@ -289,7 +289,8 @@ void startMeasurement(void)
 //    UARTprintf("'%x' ",before);
     // Select Mode 2 for operation for operations more than 500 ns
     spiWriteReg8(TDC7200_REG_ADR_CONFIG1,TDC7200_REG_SHIFT_CONFIG1_MEAS_MODE_2
-                 |TDC7200_REG_SHIFT_FORCE_CAL|TDC7200_REG_SHIFT_INT_MASK_NEW_MEAS_MASK);  //Start the measurement
+                 |TDC7200_REG_SHIFT_FORCE_CAL|TDC7200_REG_SHIFT_INT_MASK_NEW_MEAS_MASK);
+    //spiWriteReg8(TDC7200_REG_ADR_CONFIG1,TDC7200_REG_SHIFT_INT_MASK_NEW_MEAS_MASK);  //Start the measurement
 }
 
 
@@ -344,19 +345,19 @@ void TDC7200_INT ()
 
 
     const uint32_t calibration1 = spiReadReg24(TDC7200_REG_ADR_CALIBRATION1);               // Retrieveing the CALIB1 value
-    //UARTprintf("Calib 1: '%x' \t",calibration1);
+//    UARTprintf("Calib 1: '%x' \t",calibration1);
 
     const uint32_t calibration2 = spiReadReg24(TDC7200_REG_ADR_CALIBRATION2);               // // Retrieveing the CALIB2 value
-    //UARTprintf("Calib 2: '%x' \t",calibration2);
+//    UARTprintf("Calib 2: '%x' \t",calibration2);
 
     const uint32_t time1= spiReadReg24(TDC7200_REG_ADR_TIME1);
-    //UARTprintf("Time1: '%x' \t",time1);
+//    UARTprintf("Time1: '%x' \t",time1);
 
     const uint32_t time2= spiReadReg24(TDC7200_REG_ADR_TIME2);
-    //UARTprintf("Time2: '%x' \t",time2);
+//    UARTprintf("Time2: '%x' \t",time2);
 
     const uint32_t clock_count1= spiReadReg24(TDC7200_REG_ADR_CLOCK_COUNT1);
-    //UARTprintf("Clock_Count1: '%x' \t",clock_count1);
+//    UARTprintf("Clock_Count1: '%x' \n",clock_count1);
 
     calCount= (((int64_t)(calibration2-calibration1)<<(shift))/(TDC7200_cal2_Period-1));          // Define calCount
     //UARTprintf("calCount'%x'\t",calCount);
@@ -366,7 +367,10 @@ void TDC7200_INT ()
 
     tof = (((int64_t)(time1)-(int64_t)(time2))*normLSB)>>shift;   //reg values
     tof+= ((uint64_t)clock_count1)*(uint64_t)((PS_PER_SEC)/(TDC7200_CLOCK_FREQ));
-
+//    spiWriteReg8(TDC7200_REG_ADR_CONFIG1,TDC7200_REG_SHIFT_INT_MASK_NEW_MEAS_MASK);  //Start the measurement
+    spiWriteReg8(TDC7200_REG_ADR_CONFIG1,TDC7200_REG_SHIFT_CONFIG1_MEAS_MODE_2
+                 |TDC7200_REG_SHIFT_FORCE_CAL|TDC7200_REG_SHIFT_INT_MASK_NEW_MEAS_MASK);
+//
     if (tof == 0ull)
         {
         UARTprintf("0\n");
@@ -384,8 +388,7 @@ void TDC7200_INT ()
 
     //spiWriteReg8(TDC7200_REG_ADR_CONFIG1,TDC7200_REG_SHIFT_INT_MASK_NEW_MEAS_MASK);  //Start the measurement
     //UARTprintf("\nMeasurement Restarted \n");
-        spiWriteReg8(TDC7200_REG_ADR_CONFIG1,TDC7200_REG_SHIFT_CONFIG1_MEAS_MODE_2
-                 |TDC7200_REG_SHIFT_FORCE_CAL|TDC7200_REG_SHIFT_INT_MASK_NEW_MEAS_MASK);  //Start the measurement
+  //  spiWriteReg8(TDC7200_REG_ADR_CONFIG1,TDC7200_REG_SHIFT_INT_MASK_NEW_MEAS_MASK);  //Start the measurement
 }
 
 
